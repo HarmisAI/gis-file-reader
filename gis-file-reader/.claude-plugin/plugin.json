@@ -1,0 +1,23 @@
+{
+  "name": "gis-file-reader",
+  "displayName": "GIS File Reader by Harmis",
+  "version": "0.1.0",
+  "description": "Read, convert and map GIS files in chat: Shapefile, KML, KMZ and GeoJSON. Layers, feature counts, CRS, extent and attributes; convert to GeoJSON, KML or CSV; turn a route file into a Harmis tracking project.",
+  "author": {
+    "name": "Harmis Inc.",
+    "url": "https://www.harmis.com"
+  },
+  "homepage": "https://www.harmis.com",
+  "license": "MIT",
+  "keywords": [
+    "gis",
+    "shapefile",
+    "kml",
+    "kmz",
+    "geojson",
+    "map",
+    "fiber",
+    "fttx"
+  ],
+  "privacyPolicyUrl": "https://www.harmis.com/privacy"
+}
