@@ -54,6 +54,7 @@ CROSS_STREETS = {
     "Hickory St": (965.0, 9.0, 5.1, 1, 4),
     "Samara Blvd": (1140.0, 12.0, 3.9, 0, 5),
 }
+CROSS_STREET_WAVELENGTH = 900.0  # one for all of them; an east-west street has its own above
 # A court leaves a street and ends: name, street index, easting, +1 north or -1 south, length.
 COURTS = [
     ("Aspen Ct", 0, 330.0, -1, 55.0),
@@ -81,7 +82,7 @@ WGS84_PRJ = (
     'GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137.0,298.257223563]],'
     'PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]]'
 )
-ZIP_DATE = (2026, 11, 20, 0, 0, 0)
+FILE_DATE = (2026, 11, 20, 0, 0, 0)  # of each zip entry and in the .dbf header
 
 
 def street_y(index, x):
@@ -93,7 +94,7 @@ def street_y(index, x):
 def cross_x(name, y):
     """The easting of cross street `name` at northing `y`."""
     base, bend, shift, _, _ = CROSS_STREETS[name]
-    return base + bend * math.sin(2 * math.pi * y / 900.0 + shift)
+    return base + bend * math.sin(2 * math.pi * y / CROSS_STREET_WAVELENGTH + shift)
 
 
 def crossing(index, name):
@@ -143,14 +144,22 @@ def feet_along(lon_lat_line):
     return meters * FEET_PER_METER
 
 
+def south_limit(x):
+    """The northing where phases 1 end and phases 2 start: halfway between two streets."""
+    return (street_y(1, x) + street_y(2, x)) / 2
+
+
+def north_limit(x):
+    """The northing where phases 2 end and phase 3 starts."""
+    return (street_y(3, x) + street_y(4, x)) / 2
+
+
 def phase_at(point):
     x, y = point
-    south_limit = (street_y(1, x) + street_y(2, x)) / 2
-    north_limit = (street_y(3, x) + street_y(4, x)) / 2
-    if y >= north_limit:
+    if y >= north_limit(x):
         return "3"
     side = "A" if x < MIDDLE else "B"
-    return ("1" if y < south_limit else "2") + side
+    return ("1" if y < south_limit(x) else "2") + side
 
 
 def runs():
@@ -222,7 +231,7 @@ def conduit_rows(segments):
         line = segment["line"]
         street = segment["street"]
         is_feeder = street in FEEDER_STREETS
-        phase = phase_at(line[len(line) // 2] if len(line) > 2 else midpoint(line))
+        phase = phase_at(line[len(line) // 2])
         if street.endswith(" Ct"):
             placement = "Open trench"
         elif is_feeder:
@@ -244,11 +253,6 @@ def conduit_rows(segments):
             }
         )
     return rows
-
-
-def midpoint(line):
-    (ax, ay), (bx, by) = line[0], line[-1]
-    return ((ax + bx) / 2, (ay + by) / 2)
 
 
 def vault_properties(vault):
@@ -273,19 +277,14 @@ def vault_properties(vault):
 
 
 def phase_rings():
-    """Each phase's outline, counter-clockwise: block limits run halfway between two streets."""
-
-    def limit(lower, upper):
-        return lambda x: (street_y(lower, x) + street_y(upper, x)) / 2
-
-    south, north = limit(1, 2), limit(3, 4)
+    """Each phase's outline, counter-clockwise, between the limits `phase_at` uses."""
     bottom, top = (lambda x: 0.0), (lambda x: EDGE_NORTH)
     areas = {
-        "1A": (0.0, MIDDLE, bottom, south),
-        "1B": (MIDDLE, EDGE_EAST, bottom, south),
-        "2A": (0.0, MIDDLE, south, north),
-        "2B": (MIDDLE, EDGE_EAST, south, north),
-        "3": (0.0, EDGE_EAST, north, top),
+        "1A": (0.0, MIDDLE, bottom, south_limit),
+        "1B": (MIDDLE, EDGE_EAST, bottom, south_limit),
+        "2A": (0.0, MIDDLE, south_limit, north_limit),
+        "2B": (MIDDLE, EDGE_EAST, south_limit, north_limit),
+        "3": (0.0, EDGE_EAST, north_limit, top),
     }
     rings = {}
     for phase, (west, east, low, high) in areas.items():
@@ -338,8 +337,8 @@ def box_of(points):
     return (min(xs), min(ys), max(xs), max(ys))
 
 
-def shapefile_parts(rows, lines):
-    """The .shp, .shx and .dbf of a PolyLine layer (ESRI Shapefile Technical Description, 1998)."""
+def shp_and_shx_of(lines):
+    """The geometry and its index for a PolyLine layer (ESRI Shapefile Technical Description)."""
     polyline = 3
     records, index, offset = b"", b"", 50
     for number, line in enumerate(lines, start=1):
@@ -353,7 +352,11 @@ def shapefile_parts(rows, lines):
     box = box_of([point for line in lines for point in line])
     shp = shp_header(polyline, offset, box) + records
     shx = shp_header(polyline, 50 + len(index) // 2, box) + index
+    return shp, shx
 
+
+def dbf_of(rows):
+    """The attribute table: dBASE III, text left-aligned and numbers right-aligned."""
     fields = []
     for name in rows[0]:
         values = [row[name] for row in rows]
@@ -363,7 +366,7 @@ def shapefile_parts(rows, lines):
             decimals = 1 if isinstance(values[0], float) else 0
             fields.append((name, b"N", max(len(str(v)) for v in values), decimals))
     record_length = 1 + sum(width for _, _, width, _ in fields)
-    year, month, day = ZIP_DATE[:3]
+    year, month, day = FILE_DATE[:3]
     dbf = struct.pack(
         "<4BIHH20x", 3, year - 1900, month, day, len(rows), 33 + 32 * len(fields), record_length
     )
@@ -375,16 +378,16 @@ def shapefile_parts(rows, lines):
         for name, kind, width, _ in fields:
             text = str(row[name]).encode()
             dbf += text.rjust(width) if kind == b"N" else text.ljust(width)
-    dbf += b"\x1a"
-    return shp, shx, dbf
+    return dbf + b"\x1a"
 
 
 def write_shapefile_zip(path, layer, rows, lines):
-    shp, shx, dbf = shapefile_parts(rows, lines)
+    shp, shx = shp_and_shx_of(lines)
+    dbf = dbf_of(rows)
     parts = {"shp": shp, "shx": shx, "dbf": dbf, "prj": WGS84_PRJ.encode(), "cpg": b"UTF-8"}
     with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as archive:
         for extension, content in parts.items():
-            entry = zipfile.ZipInfo(f"{layer}.{extension}", ZIP_DATE)
+            entry = zipfile.ZipInfo(f"{layer}.{extension}", FILE_DATE)
             entry.compress_type = zipfile.ZIP_DEFLATED
             entry.external_attr = 0o644 << 16
             archive.writestr(entry, content)

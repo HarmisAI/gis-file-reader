@@ -24,7 +24,7 @@ The Harmis GIS connector reads KML, KMZ, GeoJSON and Shapefile. Pick the tool by
 ## File rules
 
 - Pass the file as the user gave it. A link goes in `url`. A file attached to the chat goes in `content`: the whole file in base64, with its name in `fileName`.
-- Never retype, shorten, group, simplify or sample a file, and never leave out features or attributes. The summary and the map would then show a file the user does not have.
+- Never shorten, group, simplify or sample a file, and never leave out features or attributes. The summary and the map would then show a file the user does not have.
 - When an attached file is too large to pass whole, do not call a tool with part of it. Ask the user for an `https` link that downloads the file itself and opens without a sign-in, and pass it as `url`.
 - A Shapefile is several files. Ask for a zip holding at least `.shp`, `.shx`, `.dbf` and `.prj`; a lone `.shp` cannot be read.
 - Files up to 20 MB. A conversion result over 1 MB is refused: suggest filtering or splitting the file.
