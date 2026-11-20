@@ -39,8 +39,13 @@ claude --plugin-dir gis-file-reader/gis-file-reader
 
 ## Use
 
-Give Claude a link to the file: an `https` address that opens without a sign-in. Then ask in your
-own words.
+Give Claude a link to the file: an `https` address that downloads the file itself and opens
+without a sign-in. A sharing link that opens a page showing the file does not work. Anyone who
+has the link can open the file, so remove the link when you are done. Then ask in your own
+words.
+
+You can also attach a small file to the chat. Claude copies an attached file into its request
+to Harmis, and only a small file fits there. For a larger file, give its link.
 
 | Ask | What you get |
 |---|---|
@@ -49,6 +54,8 @@ own words.
 | "Convert this KML to GeoJSON" | The file in GeoJSON, KML, or CSV with WKT geometry |
 | "Show this route on a map" | The shapes on an interactive map in the chat |
 | "Create a Harmis project from this file" | A Harmis project that tracks progress on the file's routes, sites and areas (needs a Harmis account) |
+
+The [samples](samples/) folder has made-up files to try it with.
 
 ## Tools
 

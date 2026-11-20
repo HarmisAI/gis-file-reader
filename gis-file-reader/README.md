@@ -1,9 +1,9 @@
 # GIS File Reader by Harmis
 
-Open GIS files in Claude without desktop GIS software. Share a Shapefile (as a zip), KML, KMZ or
-GeoJSON file and ask about it: Claude reads its layers, feature counts, geometry types, coordinate
-system, extent, total line length and attribute fields; converts it to GeoJSON, KML or CSV; and
-shows the shapes on an interactive map.
+Open GIS files in Claude without desktop GIS software. Give Claude a link to a Shapefile (as a
+zip), KML, KMZ or GeoJSON file, or attach a small one, and ask about it: Claude reads its layers,
+feature counts, geometry types, coordinate system, extent, total line length and attribute fields;
+converts it to GeoJSON, KML or CSV; and shows the shapes on an interactive map.
 
 For telecom and fiber teams, a route or design file can become a Harmis project that tracks
 build progress per route, site and area, once you sign in to a Harmis account.
