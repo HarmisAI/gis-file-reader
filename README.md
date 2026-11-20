@@ -55,7 +55,7 @@ to Harmis, and only a small file fits there. For a larger file, give its link.
 | "Show this route on a map" | The shapes on an interactive map in the chat |
 | "Create a Harmis project from this file" | A Harmis project that tracks progress on the file's routes, sites and areas (needs a Harmis account) |
 
-The [samples](samples/) folder has made-up files to try it with.
+The [samples](samples/) folder has made-up files to try GIS File Reader with.
 
 ## Tools
 

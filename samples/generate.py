@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Writes the sample files of this folder. Standard library only; the output is the same each run.
+"""Writes the sample files of this folder. Standard library only, and nothing random in it.
 
 Maple Ridge is made up: a fiber-to-the-home build for a subdivision that does not exist. The
 streets are drawn by this script on open land, so no file here holds data from a real network,
